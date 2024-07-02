@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_services"
+        android:icon="@drawable/ic_services"
+        android:title="Servicios" />
+
+    <item
+        android:id="@+id/navigation_volunteers"
+        android:icon="@drawable/ic_volunteers"
+        android:title="Voluntarios" />
+
+    <item
+        android:id="@+id/navigation_add_service"
+        android:icon="@drawable/ic_add_service"
+        android:title="Añadir Servicio" />
+
+</menu>

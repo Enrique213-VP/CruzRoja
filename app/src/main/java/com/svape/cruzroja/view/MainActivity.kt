@@ -23,9 +23,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.Manifest
 import android.app.DatePickerDialog
+import androidx.fragment.app.Fragment
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.svape.cruzroja.R
 import com.svape.cruzroja.model.Service
 import com.svape.cruzroja.model.Volunteer
+import com.svape.cruzroja.view.fragments.AddServiceFragment
+import com.svape.cruzroja.view.fragments.ServicesFragment
+import com.svape.cruzroja.view.fragments.VolunteersFragment
 import com.svape.cruzroja.viewmodel.ServiceViewModel
 import java.io.File
 import java.io.IOException
@@ -42,7 +47,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var imageView: ImageView
     private var photoUri: Uri? = null
     private var currentPhotoPath: String? = null
-    private lateinit var dateInput: EditText
     private var selectedDate: Date? = null
 
 
@@ -79,109 +83,35 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
-        val adapter = ServiceAdapter()
-        recyclerView.adapter = adapter
-        recyclerView.layoutManager = LinearLayoutManager(this)
-
-        serviceViewModel.services.observe(this, Observer { services ->
-            services?.let { adapter.submitList(it) }
-        })
-
-        val serviceNameInput: EditText = findViewById(R.id.serviceNameInput)
-        dateInput = findViewById(R.id.dateInput)
-        val volunteerNameInput: EditText = findViewById(R.id.volunteerNameInput)
-        val hoursInput: EditText = findViewById(R.id.hoursInput)
-        val addServiceButton: Button = findViewById(R.id.addServiceButton)
-        val addVolunteerButton: Button = findViewById(R.id.addVolunteerButton)
-        val selectImageButton: Button = findViewById(R.id.selectImageButton)
-        val takePictureButton: Button = findViewById(R.id.takePictureButton)
-        imageView = findViewById(R.id.imageView)
-
-        dateInput.setOnClickListener {
-            showDatePickerDialog()
-        }
-
-        addServiceButton.setOnClickListener {
-            val serviceName = serviceNameInput.text.toString()
-            val dateString = dateInput.text.toString()
-            val imageUri = photoUri?.toString() ?: ""
-
-            val date = try {
-                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateString)
-            } catch (e: ParseException) {
-                null
-            }
-
-            if (date != null) {
-                val service = Service(serviceName, date, emptyList(), imageUri)
-                serviceViewModel.addService(service)
-            } else {
-                // Manejar error de fecha inválida
-                dateInput.error = "Fecha inválida"
+        val bottomNavigationView: BottomNavigationView = findViewById(R.id.bottom_navigation)
+        bottomNavigationView.setOnNavigationItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.navigation_services -> {
+                    loadFragment(ServicesFragment())
+                    true
+                }
+                R.id.navigation_volunteers -> {
+                    loadFragment(VolunteersFragment())
+                    true
+                }
+                R.id.navigation_add_service -> {
+                    loadFragment(AddServiceFragment())
+                    true
+                }
+                else -> false
             }
         }
 
-        addVolunteerButton.setOnClickListener {
-            val serviceName = serviceNameInput.text.toString()
-            val volunteerName = volunteerNameInput.text.toString()
-            val hours = hoursInput.text.toString().toInt()
-            val volunteer = Volunteer(volunteerName, hours, photoUri?.toString() ?: "")
-            serviceViewModel.addVolunteer(serviceName, volunteer)
-        }
-
-        dateInput.setOnClickListener {
-            showDatePickerDialog()
-        }
-
-        addServiceButton.setOnClickListener {
-            val serviceName = serviceNameInput.text.toString()
-            val imageUri = photoUri?.toString() ?: ""
-
-            if (selectedDate != null) {
-                val service = Service(serviceName, selectedDate!!, emptyList(), imageUri)
-                serviceViewModel.addService(service)
-            } else {
-                // Manejar error de fecha no seleccionada
-                dateInput.error = "Fecha no seleccionada"
-            }
-        }
-
-        addVolunteerButton.setOnClickListener {
-            val serviceName = serviceNameInput.text.toString()
-            val volunteerName = volunteerNameInput.text.toString()
-            val hours = hoursInput.text.toString().toInt()
-            val volunteer = Volunteer(volunteerName, hours, photoUri?.toString() ?: "")
-            serviceViewModel.addVolunteer(serviceName, volunteer)
-        }
-
-        selectImageButton.setOnClickListener {
-            selectImage()
-        }
-
-        takePictureButton.setOnClickListener {
-            if (checkPermissions()) {
-                takePicture()
-            } else {
-                requestPermissions()
-            }
-        }
+        // Cargar el fragmento inicial
+        loadFragment(ServicesFragment())
     }
 
-    private fun showDatePickerDialog() {
-        val calendar = Calendar.getInstance()
-        val datePickerDialog = DatePickerDialog(
-            this,
-            { _, year, month, dayOfMonth ->
-                calendar.set(year, month, dayOfMonth)
-                selectedDate = calendar.time
-                dateInput.setText(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(selectedDate!!))
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
-        )
-        datePickerDialog.show()
+
+    private fun loadFragment(fragment: Fragment) {
+        supportFragmentManager
+            .beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .commit()
     }
 
     private fun checkPermissions(): Boolean {
