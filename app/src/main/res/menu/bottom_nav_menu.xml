@@ -7,13 +7,7 @@
         android:title="Servicios" />
 
     <item
-        android:id="@+id/navigation_volunteers"
-        android:icon="@drawable/ic_volunteers"
-        android:title="Voluntarios" />
-
-    <item
         android:id="@+id/navigation_add_service"
         android:icon="@drawable/ic_add_service"
         android:title="Añadir Servicio" />
-
 </menu>

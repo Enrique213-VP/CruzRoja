@@ -19,12 +19,17 @@
         android:focusable="false"
         android:inputType="none" />
 
-    <EditText
-        android:id="@+id/hoursInput"
+    <Button
+        android:id="@+id/addVolunteerButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Añadir Voluntario" />
+
+    <LinearLayout
+        android:id="@+id/volunteersLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Número de horas"
-        android:inputType="number" />
+        android:orientation="vertical" />
 
     <Button
         android:id="@+id/addServiceButton"

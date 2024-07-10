@@ -8,26 +8,27 @@ import com.svape.cruzroja.model.Volunteer
 
 class ServiceViewModel : ViewModel() {
 
+    // Lista mutable de servicios
     private val _services = MutableLiveData<List<Service>>()
-    val services: LiveData<List<Service>> get() = _services
+    val services: LiveData<List<Service>>
+        get() = _services
+
+    // Lista mutable de voluntarios para el servicio actual
+    private val _volunteers = MutableLiveData<List<Volunteer>>()
+    val volunteers: LiveData<List<Volunteer>>
+        get() = _volunteers
 
     init {
+        // Inicializar la lista de servicios (puedes cargar datos iniciales aquí si es necesario)
         _services.value = mutableListOf()
+        _volunteers.value = mutableListOf()
     }
 
     fun addService(service: Service) {
-        val currentList = _services.value as MutableList
+        val currentList = _services.value?.toMutableList() ?: mutableListOf()
         currentList.add(service)
         _services.value = currentList
     }
 
-    fun addVolunteer(serviceName: String, volunteer: Volunteer) {
-        val currentList = _services.value as MutableList
-        val service = currentList.find { it.serviceName == serviceName }
-        service?.let {
-            val updatedService = it.copy(volunteers = it.volunteers + volunteer)
-            currentList[currentList.indexOf(it)] = updatedService
-            _services.value = currentList
-        }
-    }
+    // Métodos adicionales según sea necesario, como actualizar o eliminar servicios
 }
