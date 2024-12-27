@@ -1,4 +1,4 @@
-package com.svape.cruzroja.model
+package com.svape.cruzroja.data.model
 
 import android.os.Parcel
 import android.os.Parcelable
@@ -7,24 +7,31 @@ import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import java.util.Date
 
-
+@Entity(tableName = "services")
 data class Service(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val serviceName: String,
+    val description: String, // Nueva propiedad
     val date: Date,
-    val volunteers: List<Volunteer>,
     val imageUri: String
 ) : Parcelable {
+
+    @Ignore
+    var volunteers: List<Volunteer> = listOf()
+
     constructor(parcel: Parcel) : this(
-        parcel.readString()!!,
-        Date(parcel.readLong()),
-        parcel.createTypedArrayList(Volunteer.CREATOR)!!,
-        parcel.readString()!!
+        id = parcel.readInt(),
+        serviceName = parcel.readString()!!,
+        description = parcel.readString()!!, // Leer descripción
+        date = Date(parcel.readLong()),
+        imageUri = parcel.readString()!!
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeInt(id)
         parcel.writeString(serviceName)
+        parcel.writeString(description) // Escribir descripción
         parcel.writeLong(date.time)
-        parcel.writeTypedList(volunteers)
         parcel.writeString(imageUri)
     }
 
@@ -35,3 +42,4 @@ data class Service(
         override fun newArray(size: Int): Array<Service?> = arrayOfNulls(size)
     }
 }
+

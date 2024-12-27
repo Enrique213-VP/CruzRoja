@@ -22,7 +22,8 @@ import androidx.core.view.WindowInsetsCompat
 import com.bumptech.glide.Glide
 import com.svape.cruzroja.R
 import com.svape.cruzroja.databinding.ActivityServiceDetailBinding
-import com.svape.cruzroja.model.Service
+import com.svape.cruzroja.data.model.Service
+import com.svape.cruzroja.data.model.Volunteer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,13 +50,20 @@ class ServiceDetailActivity : AppCompatActivity() {
             insets
         }
 
+        // Recibir el servicio
         val service = intent.getParcelableExtra<Service>("service")
+
+        // Recibir la lista de voluntarios
+        val volunteers = intent.getParcelableArrayListExtra<Volunteer>("volunteers")
+
         service?.let {
+            // Configurar el contenido del servicio
             binding.serviceNameTextView.text = it.serviceName
             binding.serviceDateTextView.text =
                 SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(it.date)
 
-            it.volunteers.forEach { volunteer ->
+            // Mostrar la lista de voluntarios
+            volunteers?.forEach { volunteer ->
                 val volunteerTextView = TextView(this).apply {
                     text = "${volunteer.name} - ${volunteer.hours} horas"
                     textSize = 16f
@@ -63,6 +71,7 @@ class ServiceDetailActivity : AppCompatActivity() {
                 binding.volunteerListLayout.addView(volunteerTextView)
             }
 
+            // Cargar la imagen del servicio
             Glide.with(this).load(it.imageUri).into(binding.serviceImage)
             Log.e("ImageCruzroja", it.imageUri)
         }
@@ -70,7 +79,7 @@ class ServiceDetailActivity : AppCompatActivity() {
         binding.exportPdfButton.setOnClickListener {
             service?.let { service ->
                 CoroutineScope(Dispatchers.Main).launch {
-                    exportServiceToPdf(service)
+                    exportServiceToPdf(service, volunteers ?: emptyList())
                 }
             }
         }
@@ -87,11 +96,10 @@ class ServiceDetailActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun exportServiceToPdf(service: Service) {
+    private suspend fun exportServiceToPdf(service: Service, volunteers: List<Volunteer>) {
         withContext(Dispatchers.IO) {
             val pdfDocument = PdfDocument()
 
-            // Crear página
             val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
             val page = pdfDocument.startPage(pageInfo)
             val canvas: Canvas = page.canvas
@@ -100,7 +108,6 @@ class ServiceDetailActivity : AppCompatActivity() {
             paint.color = Color.BLACK
             paint.textSize = 16f
 
-            // Escribir contenido en el PDF
             var yPosition = 50f
             canvas.drawText("Nombre del Servicio: ${service.serviceName}", 10f, yPosition, paint)
             yPosition += 30f
@@ -113,12 +120,20 @@ class ServiceDetailActivity : AppCompatActivity() {
             yPosition += 30f
             canvas.drawText("Voluntarios:", 10f, yPosition, paint)
             yPosition += 30f
-            service.volunteers.forEach { volunteer ->
+
+            volunteers.forEach { volunteer ->
+                if (yPosition > 800) {
+                    pdfDocument.finishPage(page)
+                    val newPageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
+                    val newPage = pdfDocument.startPage(newPageInfo)
+                    canvas.drawText("Voluntarios (continuación):", 10f, yPosition, paint)
+                    yPosition = 50f
+                }
+
                 canvas.drawText("${volunteer.name} - ${volunteer.hours} horas", 20f, yPosition, paint)
                 yPosition += 30f
             }
 
-            // Dibujar imagen si está disponible
             if (!service.imageUri.isNullOrEmpty()) {
                 try {
                     val bitmap: Bitmap = Glide.with(this@ServiceDetailActivity)
@@ -134,7 +149,6 @@ class ServiceDetailActivity : AppCompatActivity() {
                 }
             }
 
-            // Finalizar la página y escribir el PDF
             pdfDocument.finishPage(page)
 
             val filePath = File(
@@ -166,6 +180,7 @@ class ServiceDetailActivity : AppCompatActivity() {
             }
         }
     }
+
 
     private fun openPdf(file: File) {
         val pdfUri: Uri = FileProvider.getUriForFile(

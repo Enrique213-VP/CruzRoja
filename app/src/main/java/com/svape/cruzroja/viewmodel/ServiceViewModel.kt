@@ -3,32 +3,71 @@ package com.svape.cruzroja.viewmodel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.svape.cruzroja.model.Service
-import com.svape.cruzroja.model.Volunteer
+import androidx.lifecycle.viewModelScope
+import com.svape.cruzroja.data.model.Service
+import com.svape.cruzroja.data.model.ServiceWithVolunteers
+import com.svape.cruzroja.data.model.Volunteer
+import com.svape.cruzroja.repository.Repository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class ServiceViewModel : ViewModel() {
+class ServiceViewModel(
+    private val repository: Repository
+) : ViewModel() {
 
-    // Lista mutable de servicios
-    private val _services = MutableLiveData<List<Service>>()
-    val services: LiveData<List<Service>>
-        get() = _services
+    private val _services = MutableLiveData<List<ServiceWithVolunteers>>()
+    val services: LiveData<List<ServiceWithVolunteers>> = _services
 
-    // Lista mutable de voluntarios para el servicio actual
-    private val _volunteers = MutableLiveData<List<Volunteer>>()
-    val volunteers: LiveData<List<Volunteer>>
-        get() = _volunteers
-
-    init {
-        // Inicializar la lista de servicios (puedes cargar datos iniciales aquí si es necesario)
-        _services.value = mutableListOf()
-        _volunteers.value = mutableListOf()
+    fun loadServices() {
+        viewModelScope.launch {
+            val servicesWithVolunteersList = withContext(Dispatchers.IO) {
+                repository.getAllServicesWithVolunteers()
+            }
+            _services.value = servicesWithVolunteersList
+        }
     }
 
     fun addService(service: Service) {
-        val currentList = _services.value?.toMutableList() ?: mutableListOf()
-        currentList.add(service)
-        _services.value = currentList
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val serviceId = repository.insertService(service)
+                service.volunteers.forEach { volunteer ->
+                    volunteer.serviceId = serviceId.toInt()
+                    insertVolunteer(volunteer)
+                }
+            }
+            loadServices()
+        }
     }
 
-    // Métodos adicionales según sea necesario, como actualizar o eliminar servicios
+    fun updateService(service: Service) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                repository.updateService(service)
+            }
+            loadServices()
+        }
+    }
+
+    fun deleteService(service: Service) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                repository.deleteService(service)
+            }
+            loadServices()
+        }
+    }
+
+    private suspend fun insertVolunteer(volunteer: Volunteer) {
+        withContext(Dispatchers.IO) {
+            repository.insertVolunteer(volunteer)
+        }
+    }
+
+    suspend fun getVolunteersForService(serviceId: Int): List<Volunteer> {
+        return withContext(Dispatchers.IO) {
+            repository.getVolunteersByServiceId(serviceId)
+        }
+    }
 }

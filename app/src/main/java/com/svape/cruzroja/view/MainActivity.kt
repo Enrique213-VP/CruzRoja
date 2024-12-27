@@ -42,7 +42,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Cargar el fragmento inicial
         loadFragment(ServicesFragment())
     }
 

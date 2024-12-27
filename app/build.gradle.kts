@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    id("kotlin-kapt")
 }
 
 android {
@@ -33,7 +34,9 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-
+    kapt {
+        correctErrorTypes = true
+    }
     buildFeatures {
         viewBinding = true
     }
@@ -48,15 +51,19 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation (libs.glide)
+    implementation(libs.glide)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
 
-    implementation (libs.androidx.room.runtime)
-    annotationProcessor (libs.androidx.room.room.compiler)
+    // Room
+    implementation(libs.androidx.room.runtime)
+    kapt(libs.androidx.room.room.compiler)  // Cambiado de annotationProcessor a kapt
+    implementation(libs.androidx.room.ktx)
 
+    // Lifecycle
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
 
     // Coroutines
-    implementation (libs.androidx.room.ktx)
-
+    implementation(libs.kotlinx.coroutines.android)
 }
