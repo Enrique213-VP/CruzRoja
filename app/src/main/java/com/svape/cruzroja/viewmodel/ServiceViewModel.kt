@@ -1,5 +1,6 @@
 package com.svape.cruzroja.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,6 +12,7 @@ import com.svape.cruzroja.repository.Repository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Date
 
 class ServiceViewModel(
     private val repository: Repository
@@ -18,6 +20,11 @@ class ServiceViewModel(
 
     private val _services = MutableLiveData<List<ServiceWithVolunteers>>()
     val services: LiveData<List<ServiceWithVolunteers>> = _services
+    var tempServiceName: String = ""
+    var tempDescription: String = ""
+    var tempSelectedDate: Date? = null
+    var tempPhotoUri: Uri? = null
+    var tempVolunteers: MutableList<Volunteer> = mutableListOf()
 
     fun loadServices() {
         viewModelScope.launch {

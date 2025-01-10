@@ -48,7 +48,7 @@ class ServiceAdapter(private val context: Context) :
             if (!service.imageUri.isNullOrEmpty()) {
                 Glide.with(context)
                     .load(service.imageUri)
-                    .error(R.drawable.ic_launcher_background)
+                    .error(R.drawable.camera)
                     .into(serviceImage)
             }
 
@@ -63,6 +63,13 @@ class ServiceAdapter(private val context: Context) :
 
             deleteButton.setOnClickListener {
                 onDeleteClickListener?.invoke(service)
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    servicesWithVolunteers = servicesWithVolunteers.toMutableList().apply {
+                        removeAt(position)
+                    }
+                    notifyItemRemoved(position)
+                }
             }
 
             editButton.setOnClickListener {

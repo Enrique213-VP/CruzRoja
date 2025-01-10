@@ -64,6 +64,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.livedata.ktx)
 
+    implementation("com.airbnb.android:lottie:6.4.0")
+
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 }

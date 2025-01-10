@@ -15,7 +15,7 @@ import com.svape.cruzroja.data.model.Volunteer
 
 @Database(
     entities = [Service::class, Volunteer::class],
-    version = 2, // Cambiado de 1 a 2
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(DateConverter::class)
@@ -34,7 +34,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "cruz_roja_database"
                 )
-                    .addMigrations(MIGRATION_1_2) // Añadida la migración
+                    .addMigrations(MIGRATION_1_2)
                     .build()
                 INSTANCE = instance
                 instance
@@ -43,7 +43,6 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                // Crear tabla temporal con la nueva estructura
                 database.execSQL(
                     """
                     CREATE TABLE services_new (
@@ -55,19 +54,14 @@ abstract class AppDatabase : RoomDatabase() {
                     )
                     """
                 )
-
-                // Copiar datos existentes
                 database.execSQL(
                     """
                     INSERT INTO services_new (id, serviceName, date, imageUri)
                     SELECT id, serviceName, date, imageUri FROM services
                     """
                 )
-
-                // Eliminar tabla antigua
                 database.execSQL("DROP TABLE services")
 
-                // Renombrar tabla nueva
                 database.execSQL("ALTER TABLE services_new RENAME TO services")
             }
         }

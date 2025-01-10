@@ -11,7 +11,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
-import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -32,7 +31,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
-import kotlin.math.log
 
 class ServiceDetailActivity : AppCompatActivity() {
 
@@ -50,19 +48,16 @@ class ServiceDetailActivity : AppCompatActivity() {
             insets
         }
 
-        // Recibir el servicio
         val service = intent.getParcelableExtra<Service>("service")
-
-        // Recibir la lista de voluntarios
         val volunteers = intent.getParcelableArrayListExtra<Volunteer>("volunteers")
 
         service?.let {
-            // Configurar el contenido del servicio
             binding.serviceNameTextView.text = it.serviceName
             binding.serviceDateTextView.text =
                 SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(it.date)
 
-            // Mostrar la lista de voluntarios
+            binding.serviceDescriptionTextView.text = it.description
+
             volunteers?.forEach { volunteer ->
                 val volunteerTextView = TextView(this).apply {
                     text = "${volunteer.name} - ${volunteer.hours} horas"
@@ -99,7 +94,6 @@ class ServiceDetailActivity : AppCompatActivity() {
     private suspend fun exportServiceToPdf(service: Service, volunteers: List<Volunteer>) {
         withContext(Dispatchers.IO) {
             val pdfDocument = PdfDocument()
-
             val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
             val page = pdfDocument.startPage(pageInfo)
             val canvas: Canvas = page.canvas
@@ -117,6 +111,8 @@ class ServiceDetailActivity : AppCompatActivity() {
                 yPosition,
                 paint
             )
+            yPosition += 30f
+            canvas.drawText("Descripción: ${service.description}", 10f, yPosition, paint)
             yPosition += 30f
             canvas.drawText("Voluntarios:", 10f, yPosition, paint)
             yPosition += 30f

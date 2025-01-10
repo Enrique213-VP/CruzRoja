@@ -3,11 +3,8 @@ package com.svape.cruzroja.view.fragments
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
-import android.app.DatePickerDialog
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -17,6 +14,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -27,9 +25,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.target.Target
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.svape.cruzroja.R
 import com.svape.cruzroja.data.database.AppDatabase
 import com.svape.cruzroja.data.model.Service
@@ -44,7 +40,6 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import javax.sql.DataSource
 
 class AddServiceFragment : Fragment() {
 
@@ -64,12 +59,11 @@ class AddServiceFragment : Fragment() {
         uri?.let {
             try {
                 photoUri = it
-                // Usar Glide para cargar la imagen de manera más eficiente
+
                 Glide.with(requireContext())
                     .load(it)
                     .into(view?.findViewById(R.id.imageView) ?: return@let)
 
-                // También puedes guardar los permisos persistentes si los necesitas
                 val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
                 requireContext().contentResolver.takePersistableUriPermission(it, flag)
             } catch (e: Exception) {
@@ -101,7 +95,6 @@ class AddServiceFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Recuperar el servicio si estamos en modo edición
         existingService = arguments?.getParcelable("service")
     }
 
@@ -113,7 +106,6 @@ class AddServiceFragment : Fragment() {
     ): View? {
         val root = inflater.inflate(R.layout.fragment_add_service, container, false)
 
-        // Inicializar vistas
         serviceNameInput = root.findViewById(R.id.serviceNameInput)
         serviceDescriptionInput = root.findViewById(R.id.serviceDescriptionInput)
         dateInput = root.findViewById(R.id.dateInput)
@@ -125,7 +117,8 @@ class AddServiceFragment : Fragment() {
         repository = Repository(serviceDao, volunteerDao)
         val factory = ServiceViewModelFactory(repository)
 
-        serviceViewModel = ViewModelProvider(requireActivity(), factory)[ServiceViewModel::class.java]
+        serviceViewModel =
+            ViewModelProvider(requireActivity(), factory)[ServiceViewModel::class.java]
 
 
         val serviceNameInput: EditText = root.findViewById(R.id.serviceNameInput)
@@ -136,13 +129,40 @@ class AddServiceFragment : Fragment() {
         val takePictureButton: Button = root.findViewById(R.id.takePictureButton)
         val volunteersLayout: LinearLayout = root.findViewById(R.id.volunteersLayout)
         val serviceDescriptionInput: EditText = root.findViewById(R.id.serviceDescriptionInput)
+        val cancelButton : Button = root.findViewById(R.id.cancelButton)
 
-        // Si estamos en modo edición, llenar los campos
+
+        serviceNameInput.setText(serviceViewModel.tempServiceName)
+        serviceDescriptionInput.setText(serviceViewModel.tempDescription)
+
+        serviceViewModel.tempSelectedDate?.let { date ->
+            selectedDate = date
+            dateInput.setText(SimpleDateFormat("dd 'de' MMMM, yyyy", Locale("es", "ES")).format(date))
+        }
+
+        serviceViewModel.tempPhotoUri?.let { uri ->
+            photoUri = uri
+            view?.findViewById<ImageView>(R.id.imageView)?.let { imageView ->
+                Glide.with(requireContext())
+                    .load(uri)
+                    .into(imageView)
+            }
+        }
+
+        serviceViewModel.tempVolunteers.forEach { volunteer ->
+            addVolunteerField(volunteersLayout, volunteer)
+        }
+
         existingService?.let { service ->
             serviceNameInput.setText(service.serviceName)
             serviceDescriptionInput.setText(service.description)
             selectedDate = service.date
-            dateInput.setText(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(service.date))
+            dateInput.setText(
+                SimpleDateFormat(
+                    "yyyy-MM-dd",
+                    Locale.getDefault()
+                ).format(service.date)
+            )
 
 
             if (service.imageUri.isNotEmpty()) {
@@ -153,7 +173,7 @@ class AddServiceFragment : Fragment() {
                     view?.findViewById<ImageView>(R.id.imageView)?.let { imageView ->
                         Glide.with(requireContext())
                             .load(uri)
-                            .error(R.drawable.ic_launcher_background)
+                            .error(R.drawable.camera)
                             .into(imageView)
                     }
                 } catch (e: Exception) {
@@ -162,7 +182,7 @@ class AddServiceFragment : Fragment() {
                 }
             }
 
-            // Cargar voluntarios existentes
+
             viewLifecycleOwner.lifecycleScope.launch {
                 val volunteers = serviceViewModel.getVolunteersForService(service.id)
                 volunteers.forEach { volunteer ->
@@ -170,16 +190,13 @@ class AddServiceFragment : Fragment() {
                 }
             }
 
-            // Cambiar el texto del botón
             root.findViewById<Button>(R.id.addServiceButton).text = "Actualizar Servicio"
         }
 
-        // Configurar botón de cancelar
         root.findViewById<Button>(R.id.cancelButton).setOnClickListener {
             parentFragmentManager.popBackStack()
         }
 
-        // Modificar el click listener del botón de guardar
         root.findViewById<Button>(R.id.addServiceButton).setOnClickListener {
             saveOrUpdateService()
         }
@@ -208,8 +225,6 @@ class AddServiceFragment : Fragment() {
             addVolunteerField(volunteersLayout)
         }
 
-
-
         addServiceButton.setOnClickListener {
             val serviceName = serviceNameInput.text.toString()
             val description = serviceDescriptionInput.text.toString()
@@ -221,42 +236,42 @@ class AddServiceFragment : Fragment() {
                     return@setOnClickListener
                 }
 
-                if (description.isEmpty()) { // Nueva validación
+                if (description.isEmpty()) {
                     serviceDescriptionInput.error = "Descripción requerida"
                     return@setOnClickListener
                 }
 
                 val volunteers = getVolunteersFromLayout(volunteersLayout)
                 if (volunteers.isEmpty()) {
-                    Toast.makeText(context, "Agregar al menos un voluntario", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Agregar al menos un voluntario", Toast.LENGTH_SHORT)
+                        .show()
                     return@setOnClickListener
                 }
 
                 val service = Service(
                     serviceName = serviceName,
-                    description = description, // Nueva línea
+                    description = description,
                     date = selectedDate!!,
                     imageUri = imageUri
                 )
 
-                // Asignar los voluntarios al servicio
+
                 service.volunteers = volunteers
 
                 serviceViewModel.addService(service)
 
-                // Mostrar mensaje de éxito y limpiar campos
                 AlertDialog.Builder(requireContext())
                     .setTitle("Servicio Añadido")
                     .setMessage("El servicio ha sido añadido exitosamente.")
                     .setPositiveButton("OK") { dialog, _ ->
                         dialog.dismiss()
-                        // Limpiar campos
                         serviceNameInput.text.clear()
                         dateInput.text.clear()
                         volunteersLayout.removeAllViews()
                         selectedDate = null
                         photoUri = null
-                        view?.findViewById<ImageView>(R.id.imageView)?.setImageResource(R.drawable.ic_launcher_background)
+                        view?.findViewById<ImageView>(R.id.imageView)
+                            ?.setImageResource(R.drawable.camera)
 
                         // Opcional: volver al fragment anterior
                         // requireActivity().supportFragmentManager.popBackStack()
@@ -267,27 +282,37 @@ class AddServiceFragment : Fragment() {
             }
         }
 
+        cancelButton.setOnClickListener {
+            clearFields()
+            parentFragmentManager.popBackStack()
+        }
+
         return root
     }
 
     private fun showDatePickerDialog() {
         val calendar = Calendar.getInstance()
-        val datePickerDialog = DatePickerDialog(
-            requireContext(),
-            { _, year, month, dayOfMonth ->
-                calendar.set(year, month, dayOfMonth)
-                selectedDate = calendar.time
-                dateInput.setText(
-                    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(
-                        selectedDate!!
-                    )
-                )
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
-        )
-        datePickerDialog.show()
+        selectedDate?.let {
+            calendar.time = it
+        }
+
+        val datePickerBuilder = MaterialDatePicker.Builder.datePicker()
+            .setTitleText("Selecciona una fecha")
+            .setSelection(calendar.timeInMillis)
+            .setTheme(R.style.RedDatePickerTheme)
+
+        val datePicker = datePickerBuilder.build()
+
+        datePicker.addOnPositiveButtonClickListener { selection ->
+            val selectedCalendar = Calendar.getInstance()
+            selectedCalendar.timeInMillis = selection
+            selectedDate = selectedCalendar.time
+
+            val dateFormat = SimpleDateFormat("dd 'de' MMMM, yyyy", Locale("es", "ES"))
+            dateInput.setText(dateFormat.format(selectedDate))
+        }
+
+        datePicker.show(parentFragmentManager, "DATE_PICKER")
     }
 
     private fun selectImage() {
@@ -324,11 +349,6 @@ class AddServiceFragment : Fragment() {
         )
     }
 
-    private fun addVolunteerField(volunteersLayout: LinearLayout) {
-        val volunteerView = LayoutInflater.from(context).inflate(R.layout.volunteer_input, volunteersLayout, false)
-        volunteersLayout.addView(volunteerView)
-    }
-
     private fun getVolunteersFromLayout(volunteersLayout: LinearLayout): List<Volunteer> {
         val volunteers = mutableListOf<Volunteer>()
         for (i in 0 until volunteersLayout.childCount) {
@@ -340,24 +360,33 @@ class AddServiceFragment : Fragment() {
             val hours = hoursInput.text.toString().toIntOrNull() ?: 0
 
             if (name.isNotEmpty()) {
-                volunteers.add(Volunteer(
-                    serviceId = 0,  // Se asignará después cuando se inserte el servicio
-                    name = name,
-                    hours = hours
-                ))
+                volunteers.add(
+                    Volunteer(
+                        serviceId = 0,
+                        name = name,
+                        hours = hours
+                    )
+                )
             }
         }
         return volunteers
     }
 
-    private fun addVolunteerField(volunteersLayout: LinearLayout, existingVolunteer: Volunteer? = null) {
+    private fun addVolunteerField(
+        volunteersLayout: LinearLayout,
+        existingVolunteer: Volunteer? = null
+    ) {
         val volunteerView = LayoutInflater.from(context)
             .inflate(R.layout.volunteer_input, volunteersLayout, false)
 
-        // Si hay un voluntario existente, llenar los campos
         existingVolunteer?.let { volunteer ->
             volunteerView.findViewById<EditText>(R.id.volunteerNameInput).setText(volunteer.name)
-            volunteerView.findViewById<EditText>(R.id.hoursInput).setText(volunteer.hours.toString())
+            volunteerView.findViewById<EditText>(R.id.hoursInput)
+                .setText(volunteer.hours.toString())
+        }
+
+        volunteerView.findViewById<ImageButton>(R.id.deleteVolunteerButton).setOnClickListener {
+            volunteersLayout.removeView(volunteerView)
         }
 
         volunteersLayout.addView(volunteerView)
@@ -401,7 +430,6 @@ class AddServiceFragment : Fragment() {
                 serviceViewModel.addService(service)
             }
 
-            // Mostrar mensaje de éxito
             val message = if (existingService != null)
                 "Servicio actualizado exitosamente"
             else
@@ -412,11 +440,38 @@ class AddServiceFragment : Fragment() {
                 .setMessage(message)
                 .setPositiveButton("OK") { dialog, _ ->
                     dialog.dismiss()
+                    clearFields()
                     parentFragmentManager.popBackStack()
                 }
                 .show()
         } else {
             dateInput.error = "Fecha no seleccionada"
         }
+    }
+
+    private fun clearFields() {
+        serviceNameInput.text.clear()
+        serviceDescriptionInput.text.clear()
+        dateInput.text.clear()
+        volunteersLayout.removeAllViews()
+        selectedDate = null
+        photoUri = null
+
+        serviceViewModel.tempServiceName = ""
+        serviceViewModel.tempDescription = ""
+        serviceViewModel.tempSelectedDate = null
+        serviceViewModel.tempPhotoUri = null
+        serviceViewModel.tempVolunteers.clear()
+        view?.findViewById<ImageView>(R.id.imageView)?.setImageResource(R.drawable.camera)
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+        serviceViewModel.tempServiceName = serviceNameInput.text.toString()
+        serviceViewModel.tempDescription = serviceDescriptionInput.text.toString()
+        serviceViewModel.tempSelectedDate = selectedDate
+        serviceViewModel.tempPhotoUri = photoUri
+        serviceViewModel.tempVolunteers = getVolunteersFromLayout(volunteersLayout).toMutableList()
     }
 }

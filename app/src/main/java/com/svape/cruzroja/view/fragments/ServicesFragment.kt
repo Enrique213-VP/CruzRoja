@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -48,7 +49,6 @@ class ServicesFragment : Fragment() {
         }
 
         adapter.setOnEditClickListener { service ->
-            // Navegar al fragment de edición
             val editFragment = AddServiceFragment().apply {
                 arguments = Bundle().apply {
                     putParcelable("service", service)
@@ -66,7 +66,14 @@ class ServicesFragment : Fragment() {
         serviceViewModel = ViewModelProvider(requireActivity(), factory)[ServiceViewModel::class.java]
 
         serviceViewModel.services.observe(viewLifecycleOwner) { servicesWithVolunteers ->
-            servicesWithVolunteers?.let { adapter.submitList(it) }
+            if (servicesWithVolunteers.isNullOrEmpty()) {
+                recyclerView.visibility = View.GONE
+                root.findViewById<LinearLayout>(R.id.emptyStateContainer).visibility = View.VISIBLE
+            } else {
+                recyclerView.visibility = View.VISIBLE
+                root.findViewById<LinearLayout>(R.id.emptyStateContainer).visibility = View.GONE
+            }
+            adapter.submitList(servicesWithVolunteers)
         }
 
         serviceViewModel.loadServices()

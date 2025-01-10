@@ -1,8 +1,33 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.CruzRoja" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <style name="Base.Theme.CruzRoja" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/red</item>
+        <item name="colorSecondary">@color/white</item>
+
+        <!-- Color de fondo para toda la app -->
+        <item name="android:windowBackground">@color/white</item>
+
+        <!-- Iconos en blanco para mejor contraste con el fondo oscuro -->
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+    </style>
+
+    <style name="RedDatePickerTheme" parent="ThemeOverlay.MaterialComponents.MaterialCalendar">
+        <item name="colorPrimary">@color/red</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSurface">@android:color/white</item>
+        <item name="materialCalendarHeaderTitle">@style/RedTextStyle</item>
+        <item name="materialCalendarHeaderToggleButton">@style/RedIconStyle</item>
+    </style>
+
+    <style name="RedTextStyle" parent="TextAppearance.MaterialComponents.Subtitle1">
+        <item name="android:textColor">@color/red</item>
+    </style>
+
+    <style name="RedIconStyle" parent="Widget.MaterialComponents.Button.TextButton.Icon">
+        <item name="iconTint">@color/red</item>
     </style>
 
     <style name="Theme.CruzRoja" parent="Base.Theme.CruzRoja" />

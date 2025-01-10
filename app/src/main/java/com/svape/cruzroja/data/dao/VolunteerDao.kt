@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 interface VolunteerDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertVolunteer(volunteer: Volunteer): Long  // Método sin corutina
+    fun insertVolunteer(volunteer: Volunteer): Long
 
     @Query("SELECT * FROM volunteers WHERE serviceId = :serviceId")
     fun getVolunteersByServiceId(serviceId: Int): List<Volunteer>

@@ -7,21 +7,21 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "volunteers")
 data class Volunteer(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0, // Clave primaria autogenerada
-    var serviceId: Int,                              // Relación con un servicio (clave foránea)
-    val name: String,                                // Nombre del voluntario
-    val hours: Int                                   // Horas trabajadas
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    var serviceId: Int,
+    val name: String,
+    val hours: Int
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         id = parcel.readInt(),
-        serviceId = parcel.readInt(),                // Cambiar a readInt() para coincidir con el tipo de clave primaria
+        serviceId = parcel.readInt(),
         name = parcel.readString()!!,
         hours = parcel.readInt()
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeInt(id)
-        parcel.writeInt(serviceId)                    // Cambiar a writeInt() para coincidir con el tipo de clave primaria
+        parcel.writeInt(serviceId)
         parcel.writeString(name)
         parcel.writeInt(hours)
     }

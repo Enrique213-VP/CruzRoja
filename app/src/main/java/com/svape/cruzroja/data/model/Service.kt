@@ -11,7 +11,7 @@ import java.util.Date
 data class Service(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val serviceName: String,
-    val description: String, // Nueva propiedad
+    val description: String,
     val date: Date,
     val imageUri: String
 ) : Parcelable {
@@ -22,7 +22,7 @@ data class Service(
     constructor(parcel: Parcel) : this(
         id = parcel.readInt(),
         serviceName = parcel.readString()!!,
-        description = parcel.readString()!!, // Leer descripción
+        description = parcel.readString()!!,
         date = Date(parcel.readLong()),
         imageUri = parcel.readString()!!
     )
@@ -30,7 +30,7 @@ data class Service(
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeInt(id)
         parcel.writeString(serviceName)
-        parcel.writeString(description) // Escribir descripción
+        parcel.writeString(description)
         parcel.writeLong(date.time)
         parcel.writeString(imageUri)
     }

@@ -14,10 +14,10 @@ interface ServiceDao {
     fun insert(service: Service): Long
 
     @Update
-    fun update(service: Service) // Nuevo método para actualizar
+    fun update(service: Service)
 
     @Delete
-    fun delete(service: Service) // Nuevo método para eliminar
+    fun delete(service: Service)
 
     @Query("SELECT * FROM services")
     fun getAll(): List<Service>
